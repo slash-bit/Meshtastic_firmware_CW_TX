@@ -18,7 +18,7 @@ bool NodeInfoModule::handleReceivedProtobuf(const meshtastic_MeshPacket &mp, mes
     bool wasBroadcast = mp.to == NODENUM_BROADCAST;
 
     // Show new nodes on LCD screen
-    if (wasBroadcast) {
+    if (wasBroadcast && !config.device.led_heartbeat_disabled) { // weonly use the screen for poision ping unlessled heartbit is enabled
         String lcd = String("Joined: ") + p.long_name + "\n";
         if (screen)
             screen->print(lcd.c_str());

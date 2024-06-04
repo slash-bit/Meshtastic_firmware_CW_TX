@@ -16,6 +16,7 @@
 #include "modules/NodeInfoModule.h"
 #include "modules/PositionModule.h"
 #include "power.h"
+#include "sleep.h"
 #include <assert.h>
 #include <string>
 
@@ -64,6 +65,7 @@ Allocator<meshtastic_MqttClientProxyMessage> &mqttClientProxyMessagePool = stati
 Allocator<meshtastic_QueueStatus> &queueStatusPool = staticQueueStatusPool;
 
 #include "Router.h"
+uint8_t echo_from = 2888888880;
 
 MeshService::MeshService()
     : toPhoneQueue(MAX_RX_TOPHONE), toPhoneQueueStatusQueue(MAX_RX_TOPHONE), toPhoneMqttProxyQueue(MAX_RX_TOPHONE)
@@ -102,7 +104,28 @@ int MeshService::handleFromRadio(const meshtastic_MeshPacket *mp)
 
     return 0;
 }
+/// Handling of Echo packtets ( will need to be moved to a separate module.)
+int MeshService::handleEchoFromRadio(const meshtastic_MeshPacket *mp)
+{
+    powerFSM.trigger(EVENT_PACKET_FOR_PHONE); // Possibly keep the node from sleeping
+    //re-write packet from field to a fake sender !abcd647d
+    meshtastic_MeshPacket *p = packetPool.allocCopy(*mp);
+    if (!config.position.fixed_position) { //if fixed position used or no fix the new nodes will be created but overwitten eachtime new echo comes in
+        p->from = p->rx_time; // assign p->from to be the rx_start of the packet, trick to get a new unique node number
+    }
+    else {
+        //we increment numbers starting from echo_from and assign it to p->from field +1
+        p->from = echo_from++;       
+    }
+    p->hop_limit = p->hop_start; //make hop_limit equal to hop_start, so that we can see rssi and snr of the packet
+    printPacket("Forwarding echo to phone", p); //print packet to the console
+    sendToPhone(p); //send packet to the phone
+    setLed(true);
+    delay(70);
+    setLed(false);
 
+    return 0;
+}
 /// Do idle processing (mostly processing messages which have been queued from the radio)
 void MeshService::loop()
 {
@@ -271,6 +294,9 @@ bool MeshService::trySendPosition(NodeNum dest, bool wantReplies)
     if (hasValidPosition(node)) {
 #if HAS_GPS
         if (positionModule) {
+            setLed(true);
+            delay(150);
+            setLed(false);
             LOG_INFO("Sending position ping to 0x%x, wantReplies=%d, channel=%d\n", dest, wantReplies, node->channel);
             positionModule->sendOurPosition(dest, wantReplies, node->channel);
             return true;

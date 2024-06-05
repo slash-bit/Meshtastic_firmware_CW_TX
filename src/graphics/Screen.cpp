@@ -1987,6 +1987,7 @@ void Screen::setFrames()
 {
     uint8_t currentFrameNum = ui->getUiState()->currentFrame;
     LOG_DEBUG("Showing standard frame number %d\n", currentFrameNum);
+    
     showingNormalScreen = true;
 
 #ifdef USE_EINK

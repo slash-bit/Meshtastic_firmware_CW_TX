@@ -23,7 +23,8 @@
 #if defined(ARCH_ESP32) && !MESHTASTIC_EXCLUDE_BLUETOOTH
 #include "nimble/NimbleBluetooth.h"
 #endif
-
+int last_rx_time;
+int last_node_num = 1717626278;
 /*
 receivedPacketQueue - this is a queue of messages we've received from the mesh, which we are keeping to deliver to the phone.
 It is implemented with a FreeRTos queue (wrapped with a little RTQueue class) of pointers to MeshPacket protobufs (which were
@@ -65,7 +66,6 @@ Allocator<meshtastic_MqttClientProxyMessage> &mqttClientProxyMessagePool = stati
 Allocator<meshtastic_QueueStatus> &queueStatusPool = staticQueueStatusPool;
 
 #include "Router.h"
-uint8_t echo_from = 2888888880;
 
 MeshService::MeshService()
     : toPhoneQueue(MAX_RX_TOPHONE), toPhoneQueueStatusQueue(MAX_RX_TOPHONE), toPhoneMqttProxyQueue(MAX_RX_TOPHONE)
@@ -112,10 +112,21 @@ int MeshService::handleEchoFromRadio(const meshtastic_MeshPacket *mp)
     meshtastic_MeshPacket *p = packetPool.allocCopy(*mp);
     if (!config.position.fixed_position) { //if fixed position used or no fix the new nodes will be created but overwitten eachtime new echo comes in
         p->from = p->rx_time; // assign p->from to be the rx_start of the packet, trick to get a new unique node number
+        LOG_DEBUG("New random node number assigned: %x\n", p->from);
     }
     else {
-        //we increment numbers starting from echo_from and assign it to p->from field +1
-        p->from = echo_from++;       
+        if (p->rx_time - last_rx_time < 10) { //if the last packet was received less than 10 seconds ago, assign a new node number
+            last_rx_time = p->rx_time;
+            last_node_num = last_node_num + 1;
+            p->from = last_node_num; // assign p->from to be the rx_start of the packet, trick to get a new unique node number
+            LOG_DEBUG("New node static number assigned: %x\n", p->from);
+        }
+        else {
+            last_node_num = 1717626278;
+            p->from = last_node_num; // 
+            LOG_DEBUG("Same node number used: %x\n", p->from);
+        }
+      
     }
     p->hop_limit = p->hop_start; //make hop_limit equal to hop_start, so that we can see rssi and snr of the packet
     printPacket("Forwarding echo to phone", p); //print packet to the console

@@ -12,7 +12,7 @@
 #define default_min_wake_secs 10
 #define default_screen_on_secs IF_ROUTER(1, 60 * 10)
 #define default_node_info_broadcast_secs 3 * 60 * 60
-#define min_node_info_broadcast_secs 60 * 60 // No regular broadcasts of more than once an hour
+#define min_node_info_broadcast_secs 60 * 60 // We ar responsible for not spamming the network
 
 #define default_mqtt_address "mqtt.meshtastic.org"
 #define default_mqtt_username "meshdev"

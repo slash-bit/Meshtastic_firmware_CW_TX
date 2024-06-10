@@ -2147,7 +2147,7 @@ void Screen::setFrames()
 
     
     if (currentFrameNum > numframes - 1) { // If we were on a frame that no longer exists
-        ui->switchToFrame(numframes - 2); // Attempt to return to last frame
+        ui->switchToFrame(0); // if frame we were on is gone, go to first frame
         } 
     else {
         ui->switchToFrame(currentFrameNum); // Attempt to return to same frame after rebuilding the frames

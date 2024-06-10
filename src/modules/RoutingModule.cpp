@@ -15,13 +15,14 @@ bool RoutingModule::handleReceivedProtobuf(const meshtastic_MeshPacket &mp, mesh
     // FIXME - move this to a non promsicious PhoneAPI module?
     // Note: we are careful not to send back packets that started with the phone back to the phone
     //if it is broadcast and portnum is position and from is our own node, then send it to meshservice to handle it
-    if (mp.to == NODENUM_BROADCAST) { // mp.from == 0x25da660d, nodeDB->getNodeNum() / && mp.decoded.portnum == meshtastic_PortNum_POSITION_APP |  && mp.from == 0x25da660d
+    if (mp.to == NODENUM_BROADCAST && mp.from == nodeDB->getNodeNum() && mp.decoded.portnum == meshtastic_PortNum_POSITION_APP) { // mp.from == 0x25da660d, nodeDB->getNodeNum() / && mp.decoded.portnum == meshtastic_PortNum_POSITION_APP |  && mp.from == 0x25da660d
         printPacket("+++ [RoutingModule] Received own position broadcast packet ===", &mp);
 
         LOG_DEBUG("----Got packet from 0x%x ", mp.from);
 
         service.handleEchoFromRadio(&mp);
     }
+    
     if ((mp.to == NODENUM_BROADCAST || mp.to == nodeDB->getNodeNum()) && (mp.from != 0)) {
         printPacket("Delivering rx packet", &mp);
         service.handleFromRadio(&mp);

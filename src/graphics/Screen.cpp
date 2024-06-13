@@ -1988,7 +1988,7 @@ void Screen::setFrames(bool holdPosition)
     // Which frame we are currently showing. We might want to return here after the new frames are set
     uint8_t oldFrame = ui->getUiState()->currentFrame;
 
-    LOG_DEBUG("showing standard frames\n");
+    LOG_DEBUG("showing standard frames. oldFrame %d\n", oldFrame);
     showingNormalScreen = true;
 
 #ifdef USE_EINK
@@ -2079,7 +2079,7 @@ void Screen::setFrames(bool holdPosition)
     // In some situations, we'd like to return to the same frame
     static size_t oldNumFrames = numframes;
     if (holdPosition) {
-        if (oldFrame == (oldNumFrames - 1))   // If we were on the final frame (settings)
+        if (oldFrame == (oldNumFrames - 1))  // If we were on the final frame (settings)
             ui->switchToFrame(numframes - 1); // then move back to the final frame
 
         else if (oldFrame == (oldNumFrames - 2)) // If we were on the log buffer frame
@@ -2088,10 +2088,41 @@ void Screen::setFrames(bool holdPosition)
         else if (oldFrame > numframes - 1) // If we were on a frame that no longer exists
             ui->switchToFrame(0);          // back to the first frame
 
-        else
+        else 
             ui->switchToFrame(oldFrame); // Otherwise, go back to the same frame
-    }
+
+        }
+    else //in case a new incoming message is received, we want to show the message frame or if waypoint is received, show the waypoint frame
+        {
+        if (devicestate.has_rx_text_message) {
+            if (moduleFrames.size() > 0) 
+                ui->switchToFrame(moduleFrames.size() + 1);
+            
+            else 
+                ui->switchToFrame(0);
+            
+            }
+        if (devicestate.has_rx_waypoint) {
+            if (moduleFrames.size() > 0) 
+                ui->switchToFrame(moduleFrames.size() + 2);
+            
+            else 
+                ui->switchToFrame(1);
+            }
+        }
     oldNumFrames = numframes; // Store how many frames we have, in case we want to "restore position" next time
+}
+
+
+void Screen::handleStartBluetoothPinScreen(uint32_t pin)
+{
+    LOG_DEBUG("showing bluetooth screen\n");
+    showingNormalScreen = false;
+    EINK_ADD_FRAMEFLAG(dispdev, DEMAND_FAST); // E-Ink: Explicitly use fast-refresh for next frame
+
+    static FrameCallback frames[] = {drawFrameBluetooth};
+    snprintf(btPIN, sizeof(btPIN), "%06u", pin);
+    setFrameImmediateDraw(frames);
 }
 
 void Screen::setFrameImmediateDraw(FrameCallback *drawFrames)
@@ -2541,10 +2572,11 @@ void DebugInfo::drawFrameSettings(OLEDDisplay *display, OLEDDisplayUiState *stat
 
 int Screen::handleStatusUpdate(const meshtastic::Status *arg)
 {
-    // LOG_DEBUG("Screen got status update %d\n", arg->getStatusType());
+    LOG_DEBUG("Screen got status update %d\n", arg->getStatusType());
     switch (arg->getStatusType()) {
     case STATUS_TYPE_NODE:
         if (showingNormalScreen && nodeStatus->getLastNumTotal() != nodeStatus->getNumTotal()) {
+            LOG_DEBUG("Screen: Node count changed, regenerating frames, will show the previously displayed frame\n");
             setFrames(true); // Regen the list of screens, will show the previously displayed frame
         }
         nodeDB->updateGUI = false;

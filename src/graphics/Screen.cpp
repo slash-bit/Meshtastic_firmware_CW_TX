@@ -41,8 +41,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "mesh/Channels.h"
 #include "mesh/generated/meshtastic/deviceonly.pb.h"
 #include "meshUtils.h"
+#include "modules/AdminModule.h"
 #include "modules/ExternalNotificationModule.h"
 #include "modules/TextMessageModule.h"
+#include "modules/WaypointModule.h"
 #include "sleep.h"
 #include "target_specific.h"
 
@@ -1777,8 +1779,11 @@ void Screen::setup()
     nodeStatusObserver.observe(&nodeStatus->onNewStatus);
     if (textMessageModule)
         textMessageObserver.observe(textMessageModule);
+    if (waypointModule)
+        waypointObserver.observe(waypointModule);
     if (inputBroker)
         inputObserver.observe(inputBroker);
+    adminMessageObserver.observe(adminModule);
 
     // Modules can notify screen about refresh
     MeshModule::observeUIEvents(&uiFrameEventObserver);
@@ -2054,7 +2059,7 @@ void Screen::setScreensaverFrames(FrameCallback einkScreensaver)
 #endif
 
 // restore our regular frame list
-void Screen::setFrames(bool holdPosition)
+void Screen::setFrames(targetFrame target)
 {
     // Which frame we are currently showing. We might want to return here after the new frames are set
     uint8_t oldFrame = ui->getUiState()->currentFrame;
@@ -2668,7 +2673,7 @@ int Screen::handleStatusUpdate(const meshtastic::Status *arg)
     case STATUS_TYPE_NODE:
         if (showingNormalScreen && nodeStatus->getLastNumTotal() != nodeStatus->getNumTotal()) {
             LOG_DEBUG("Screen: Node count changed, regenerating frames, will show the previously displayed frame\n");
-            setFrames(true); // Regen the list of screens, will show the previously displayed frame
+            setFrames(TARGETFRAME_PRESERVE); // Regen the list of screens, will show the previously displayed frame
         }
         nodeDB->updateGUI = false;
         break;
@@ -2679,14 +2684,15 @@ int Screen::handleStatusUpdate(const meshtastic::Status *arg)
 
 int Screen::handleTextMessage(const meshtastic_MeshPacket *packet)
 {
+    LOG_DEBUG("handleTextMessage()\n");
     if (showingNormalScreen) {
         // Outgoing message
         if (packet->from == 0)
-            setFrames(true); // Return to same frame
+            setFrames(TARGETFRAME_PRESERVE); // Return to same frame
 
         // Incoming message
         else
-            setFrames(false); // Regen the list of screens (will show new text message)
+            setFrames(TARGETFRAME_TEXTMESSAGE); // Regen the list of screens (will show new text message)
     }
 
     return 0;
@@ -2699,9 +2705,6 @@ int Screen::handleUIFrameEvent(const UIFrameEvent *event)
             setFrames(); // Regen the list of screens (will show new text message)
         } else if (event->needRedraw) {
             setFastFramerate();
-            // TODO: We might also want switch to corresponding frame,
-            //       but we don't know the exact frame number.
-            // ui->switchToFrame(0);
         }
     }
 
@@ -2734,6 +2737,26 @@ int Screen::handleInputEvent(const InputEvent *event)
         }
     }
 
+    return 0;
+}
+
+int Screen::handleWaypoint(const meshtastic_MeshPacket *arg)
+{
+    setFrames(TARGETFRAME_WAYPOINT);
+    return 0;
+}
+
+int Screen::handleAdminMessage(const meshtastic_AdminMessage *arg)
+{
+    switch (arg->which_payload_variant) {
+    case meshtastic_AdminMessage_remove_by_nodenum_tag:
+        setFrames(TARGETFRAME_PRESERVE);
+        break;
+
+    default:
+        setFrames(TARGETFRAME_DEFAULT);
+        break;
+    }
     return 0;
 }
 

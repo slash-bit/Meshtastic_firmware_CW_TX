@@ -126,6 +126,10 @@ class Screen : public concurrency::OSThread
         CallbackObserver<Screen, const meshtastic::Status *>(this, &Screen::handleStatusUpdate);
     CallbackObserver<Screen, const meshtastic_MeshPacket *> textMessageObserver =
         CallbackObserver<Screen, const meshtastic_MeshPacket *>(this, &Screen::handleTextMessage);
+    CallbackObserver<Screen, const meshtastic_MeshPacket *> waypointObserver =
+        CallbackObserver<Screen, const meshtastic_MeshPacket *>(this, &Screen::handleWaypoint);
+    CallbackObserver<Screen, const meshtastic_AdminMessage *> adminMessageObserver =
+        CallbackObserver<Screen, const meshtastic_AdminMessage *>(this, &Screen::handleAdminMessage);
     CallbackObserver<Screen, const UIFrameEvent *> uiFrameEventObserver =
         CallbackObserver<Screen, const UIFrameEvent *>(this, &Screen::handleUIFrameEvent);
     CallbackObserver<Screen, const InputEvent *> inputObserver =
@@ -336,6 +340,8 @@ class Screen : public concurrency::OSThread
     int handleTextMessage(const meshtastic_MeshPacket *arg);
     int handleUIFrameEvent(const UIFrameEvent *arg);
     int handleInputEvent(const InputEvent *arg);
+    int handleWaypoint(const meshtastic_MeshPacket *arg);
+    int handleAdminMessage(const meshtastic_AdminMessage *arg);
 
     /// Used to force (super slow) eink displays to draw critical frames
     void forceDisplay(bool forceUiUpdate = false);
@@ -389,8 +395,17 @@ class Screen : public concurrency::OSThread
     void handleStartFirmwareUpdateScreen();
     void handleShutdownScreen();
     void handleRebootScreen();
+
+    // Which frame we want to be displayed, after we redraw with setFrames()
+    enum targetFrame : uint8_t {
+        TARGETFRAME_DEFAULT,  // No specific frame
+        TARGETFRAME_PRESERVE, // Return to the previous frame
+        TARGETFRAME_TEXTMESSAGE,
+        TARGETFRAME_WAYPOINT,
+    };
+
     /// Rebuilds our list of frames (screens) to default ones.
-    void setFrames(bool holdPosition = false);
+    void setFrames(targetFrame target = TARGETFRAME_DEFAULT);
 
     /// Try to start drawing ASAP
     void setFastFramerate();

@@ -82,8 +82,14 @@ class CannedMessageModule : public SinglePortModule, public Observable<const UIF
 
         switch (p->decoded.portnum) {
         case meshtastic_PortNum_TEXT_MESSAGE_APP:
-        case meshtastic_PortNum_ROUTING_APP:
             return true;
+        case meshtastic_PortNum_ROUTING_APP:
+            // We don't want routing messages if we're not using the canned messages module
+            // Causes the screen to redraw at strange times, returning to frame 0
+            if (this->runState == CANNED_MESSAGE_RUN_STATE_DISABLED)
+                return false;
+            else
+                return true;
         default:
             return false;
         }

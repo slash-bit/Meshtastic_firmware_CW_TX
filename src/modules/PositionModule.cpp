@@ -68,6 +68,7 @@ bool PositionModule::handleReceivedProtobuf(const meshtastic_MeshPacket &mp, mes
             printPacket(lcd.c_str(), &mp);
             if (screen) //update display
                 screen->print(lcd.c_str());
+                screen->forceDisplay(true); // Force a new UI frame, then force an EInk update
             } // end of display section            
         //endregion
         // esle if the position packet from myslef to myslef
@@ -285,8 +286,9 @@ meshtastic_MeshPacket *PositionModule::allocAtakPli()
 
 void PositionModule::sendOurPosition()
 {
-    bool requestReplies = currentGeneration != radioGeneration;
-    currentGeneration = radioGeneration;
+    bool requestReplies = true;
+    // bool requestReplies = currentGeneration != radioGeneration;
+    // currentGeneration = radioGeneration;
 
     // If we changed channels, ask everyone else for their latest info
     LOG_INFO("Sending pos@%x:6 to mesh (wantReplies=%d)\n", localPosition.timestamp, requestReplies);

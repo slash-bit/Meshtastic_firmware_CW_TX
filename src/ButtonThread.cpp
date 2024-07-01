@@ -151,13 +151,21 @@ int32_t ButtonThread::runOnce()
             LOG_BUTTON("Mulitipress! %hux\n", multipressClickCount);
             switch (multipressClickCount) {
 #if HAS_GPS
-            // 3 clicks: toggle GPS
-            case 3:
-                if (!config.device.disable_triple_click && (gps != nullptr)) {
-                    gps->toggleGpsMode();
-                    if (screen)
-                        screen->forceDisplay(true); // Force a new UI frame, then force an EInk update
+            // 3 clicks:  Send our NodeInfo ///toggle GPS
+            case 3: 
+                LOG_BUTTON("Tripple press!\n");
+                service.refreshLocalMeshNode();
+                service.trySendNodeInfo(NODENUM_BROADCAST, true);
+                if (screen) {
+                    screen->print("Sent ad-hoc nodeinfo\n");
+                    screen->forceDisplay(true); // Force a new UI frame, then force an EInk update
                 }
+
+                // if (!config.device.disable_triple_click && (gps != nullptr)) {
+                //     gps->toggleGpsMode();
+                //     if (screen)
+                //         screen->forceDisplay(true); // Force a new UI frame, then force an EInk update
+                // }
                 break;
 #endif
 #if defined(USE_EINK) && defined(PIN_EINK_EN) // i.e. T-Echo

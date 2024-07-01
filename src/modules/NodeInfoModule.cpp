@@ -65,8 +65,8 @@ meshtastic_MeshPacket *NodeInfoModule::allocReply()
     }
     uint32_t now = millis();
     // If we sent our NodeInfo less than 5 min. ago, don't send it again as it may be still underway.
-    if (lastSentToMesh && (now - lastSentToMesh) < (5 * 60 * 1000)) {
-        LOG_DEBUG("Skip sending NodeInfo since we just sent it less than 5 minutes ago.\n");
+    if (lastSentToMesh && (now - lastSentToMesh) < (1 * 60 * 1000)) {
+        LOG_DEBUG("Skip sending NodeInfo since we just sent it less than 1 minutes ago.\n");
         ignoreRequest = true; // Mark it as ignored for MeshModule
         return NULL;
     } else {

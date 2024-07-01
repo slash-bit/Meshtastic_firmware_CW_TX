@@ -98,7 +98,6 @@ int MeshService::handleFromRadio(const meshtastic_MeshPacket *mp)
         LOG_INFO("Heard a node on channel %d we don't know, sending NodeInfo and asking for a response.\n", mp->channel);
         nodeInfoModule->sendOurNodeInfo(mp->from, true, mp->channel);
     }
-
     printPacket("Forwarding to phone", mp);
     sendToPhone(packetPool.allocCopy(*mp));
 
@@ -110,30 +109,30 @@ int MeshService::handleEchoFromRadio(const meshtastic_MeshPacket *mp)
     powerFSM.trigger(EVENT_PACKET_FOR_PHONE); // Possibly keep the node from sleeping
     //re-write packet from field to a fake sender !abcd647d
     meshtastic_MeshPacket *p = packetPool.allocCopy(*mp);
-    if (!config.position.fixed_position) { //if fixed position used or no fix the new nodes will be created but overwitten eachtime new echo comes in
-        p->from = p->rx_time; // assign p->from to be the rx_start of the packet, trick to get a new unique node number
-        LOG_DEBUG("New random node number assigned: %x\n", p->from);
-    }
-    else {
-        if (p->rx_time - last_rx_time < 10) { //if the last packet was received less than 10 seconds ago, assign a new node number
-            last_rx_time = p->rx_time;
-            last_node_num = last_node_num + 1;
-            p->from = last_node_num; // assign p->from to be the rx_start of the packet, trick to get a new unique node number
-            LOG_DEBUG("New node static number assigned: %x\n", p->from);
-        }
-        else {
-            last_node_num = 1717626278;
-            p->from = last_node_num; // 
-            LOG_DEBUG("Same node number used: %x\n", p->from);
-        }
+    // if (!config.position.fixed_position) { //if fixed position used or no fix the new nodes will be created but overwitten eachtime new echo comes in
+    //     p->from = p->rx_time; // assign p->from to be the rx_start of the packet, trick to get a new unique node number
+    //     LOG_DEBUG("New random node number assigned: %x\n", p->from);
+    // }
+    // else {
+    //     if (p->rx_time - last_rx_time < 10) { //if the last packet was received less than 10 seconds ago, assign a new node number
+    //         last_rx_time = p->rx_time;
+    //         last_node_num = last_node_num + 1;
+    //         p->from = last_node_num; // assign p->from to be the rx_start of the packet, trick to get a new unique node number
+    //         LOG_DEBUG("New node static number assigned: %x\n", p->from);
+    //     }
+    //     else {
+    //         last_node_num = 1717626278;
+    //         p->from = last_node_num; // 
+    //         LOG_DEBUG("Same node number used: %x\n", p->from);
+    //     }
       
-    }
-    p->hop_limit = p->hop_start; //make hop_limit equal to hop_start, so that we can see rssi and snr of the packet
-    printPacket("Forwarding echo to phone", p); //print packet to the console
-    sendToPhone(p); //send packet to the phone
-    setLed(true);
-    delay(70);
-    setLed(false);
+    // }
+    // p->hop_limit = p->hop_start; //make hop_limit equal to hop_start, so that we can see rssi and snr of the packet
+    // // printPacket("Forwarding echo to phone", p); //print packet to the console
+    // // sendToPhone(p); //send packet to the phone
+    // setLed(true);
+    // delay(70);
+    // setLed(false);
 
     return 0;
 }
@@ -303,8 +302,8 @@ bool MeshService::trySendPosition(NodeNum dest, bool wantReplies)
     assert(node);
 
     if (hasValidPosition(node)) {
-#if HAS_GPS
-        if (positionModule) {
+#if HAS_GPS  // If we have a GPS, send our position and GPS enabled 
+        if (positionModule && gpsStatus->getHasLock()) {
             setLed(true);
             delay(150);
             setLed(false);
@@ -315,12 +314,28 @@ bool MeshService::trySendPosition(NodeNum dest, bool wantReplies)
     } else {
 #endif
         if (nodeInfoModule) {
+            setLed(true);
+            delay(180);
+            setLed(false);
             LOG_INFO("Sending nodeinfo ping to 0x%x, wantReplies=%d, channel=%d\n", dest, wantReplies, node->channel);
             nodeInfoModule->sendOurNodeInfo(dest, wantReplies, node->channel);
         }
     }
     return false;
 }
+bool MeshService::trySendNodeInfo(NodeNum dest, bool wantReplies){
+    meshtastic_NodeInfoLite *node = nodeDB->getMeshNode(nodeDB->getNodeNum());
+
+    assert(node);
+    if (nodeInfoModule) {
+    setLed(true);
+    delay(180);
+    setLed(false);
+    LOG_INFO("Sending nodeinfo ping to 0x%x, wantReplies=%d, channel=%d\n", dest, wantReplies, node->channel);
+    nodeInfoModule->sendOurNodeInfo(dest, wantReplies, node->channel);
+    }
+    return false;
+} 
 
 void MeshService::sendToPhone(meshtastic_MeshPacket *p)
 {

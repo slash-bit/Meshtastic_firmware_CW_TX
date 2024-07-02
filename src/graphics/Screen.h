@@ -263,20 +263,6 @@ class Screen : public concurrency::OSThread
         enqueueCmd(cmd);
     }
 
-    void startShutdownScreen()
-    {
-        ScreenCmd cmd;
-        cmd.cmd = Cmd::START_SHUTDOWN_SCREEN;
-        enqueueCmd(cmd);
-    }
-
-    void startRebootScreen()
-    {
-        ScreenCmd cmd;
-        cmd.cmd = Cmd::START_REBOOT_SCREEN;
-        enqueueCmd(cmd);
-    }
-
     // Function to allow the AccelerometerThread to set the heading if a sensor provides it
     // Mutex needed?
     void setHeading(long _heading)

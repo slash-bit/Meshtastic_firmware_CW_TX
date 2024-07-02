@@ -75,7 +75,6 @@ namespace graphics
 // A text message frame + debug frame + all the node infos
 FrameCallback *normalFrames;
 static uint32_t targetFramerate = IDLE_FRAMERATE;
-static char btPIN[16] = "888888";
 
 uint32_t logo_timeout = 5000; // 4 seconds for EACH logo
 

@@ -4,7 +4,13 @@
   "trunk.enableWindows": true,
   "files.insertFinalNewline": false,
   "files.trimFinalNewlines": false,
+<<<<<<< HEAD
   "files.associations": {
     "*.yaml": "home-assistant"
+=======
+  "cmake.configureOnOpen": false,
+  "[cpp]": {
+    "editor.defaultFormatter": "trunk.io"
+>>>>>>> upstream/master
   }
 }

@@ -2095,16 +2095,16 @@ void Screen::setFrames(bool holdPosition)
 }
 
 
-void Screen::handleStartBluetoothPinScreen(uint32_t pin)
-{
-    LOG_DEBUG("showing bluetooth screen\n");
-    showingNormalScreen = false;
-    EINK_ADD_FRAMEFLAG(dispdev, DEMAND_FAST); // E-Ink: Explicitly use fast-refresh for next frame
+// void Screen::handleStartBluetoothPinScreen(uint32_t pin)
+// {
+//     LOG_DEBUG("showing bluetooth screen\n");
+//     showingNormalScreen = false;
+//     EINK_ADD_FRAMEFLAG(dispdev, DEMAND_FAST); // E-Ink: Explicitly use fast-refresh for next frame
 
-    static FrameCallback frames[] = {drawFrameBluetooth};
-    snprintf(btPIN, sizeof(btPIN), "%06u", pin);
-    setFrameImmediateDraw(frames);
-}
+//     static FrameCallback frames[] = {drawFrameBluetooth};
+//     snprintf(btPIN, sizeof(btPIN), "%06u", pin);
+//     setFrameImmediateDraw(frames);
+// }
 
 void Screen::setFrameImmediateDraw(FrameCallback *drawFrames)
 {

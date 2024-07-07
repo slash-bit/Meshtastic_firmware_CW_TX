@@ -16,6 +16,7 @@
 #include "modules/NodeInfoModule.h"
 #include "modules/PositionModule.h"
 #include "power.h"
+#include "sleep.h"
 #include <assert.h>
 #include <string>
 

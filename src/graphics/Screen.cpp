@@ -2577,6 +2577,16 @@ int Screen::handleTextMessage(const meshtastic_MeshPacket *packet)
         // Incoming message
         else
             setFrames(false); // Regen the list of screens (will show new text message)
+            //flash LCD scren to indicate new message
+            #if defined(USE_EINK) && defined(PIN_EINK_EN) // i.e. T-Echo. Flash e-ink display lighting
+                digitalWrite(PIN_EINK_EN, digitalRead(PIN_EINK_EN) == LOW);
+                delay(70);
+                digitalWrite(PIN_EINK_EN, digitalRead(PIN_EINK_EN) == LOW);
+            #else
+                setLed(true); // flash LED instead
+                delay(70);
+                setLed(false);
+            #endif
     }
 
     return 0;

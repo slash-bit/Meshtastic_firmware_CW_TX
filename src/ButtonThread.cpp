@@ -14,7 +14,7 @@
 #include "platform/portduino/PortduinoGlue.h"
 #endif
 
-#define DEBUG_BUTTONS 0
+#define DEBUG_BUTTONS 1
 #if DEBUG_BUTTONS
 #define LOG_BUTTON(...) LOG_DEBUG(__VA_ARGS__)
 #else
@@ -162,7 +162,7 @@ int32_t ButtonThread::runOnce()
             LOG_BUTTON("Mulitipress! %hux\n", multipressClickCount);
             switch (multipressClickCount) {
 
-            case 3: 
+            case 3:
                 LOG_BUTTON("Tripple press!\n");
                 service.refreshLocalMeshNode();
                 service.trySendNodeInfo(NODENUM_BROADCAST, reqResponse);
@@ -172,6 +172,7 @@ int32_t ButtonThread::runOnce()
                     } else {
                         screen->print("Sent ad-hoc position\n");
                     screen->forceDisplay(true); // Force a new UI frame, then force an EInk update
+                    }
                 }
                 break;
 // #if HAS_GPS

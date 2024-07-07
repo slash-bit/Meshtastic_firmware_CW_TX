@@ -286,9 +286,9 @@ meshtastic_MeshPacket *PositionModule::allocAtakPli()
 
 void PositionModule::sendOurPosition()
 {
-    bool requestReplies = true;
-    // bool requestReplies = currentGeneration != radioGeneration;
-    // currentGeneration = radioGeneration;
+
+    bool requestReplies = currentGeneration != radioGeneration;
+    currentGeneration = radioGeneration;
 
     // If we changed channels, ask everyone else for their latest info
     LOG_INFO("Sending pos@%x:6 to mesh (wantReplies=%d)\n", localPosition.timestamp, requestReplies);

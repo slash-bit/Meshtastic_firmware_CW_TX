@@ -2586,7 +2586,7 @@ int Screen::handleUIFrameEvent(const UIFrameEvent *event)
 {
     if (showingNormalScreen) {
         if (event->frameChanged) {
-            setFrames(); // Regen the list of screens (will show new text message)
+            setFrames(true); // Regen the list of screens (will show new text message) This is probably needs changing to holdframe = true ?
         } else if (event->needRedraw) {
             setFastFramerate();
             // TODO: We might also want switch to corresponding frame,

@@ -113,6 +113,8 @@ int MeshService::handleEchoFromRadio(const meshtastic_MeshPacket *mp)
     setLed(true); // flash LED
     delay(70);
     setLed(false);
+
+    return 0;
 }
 /// Do idle processing (mostly processing messages which have been queued from the radio)
 void MeshService::loop()

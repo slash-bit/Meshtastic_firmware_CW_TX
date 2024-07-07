@@ -22,7 +22,6 @@ bool RoutingModule::handleReceivedProtobuf(const meshtastic_MeshPacket &mp, mesh
 
         service.handleEchoFromRadio(&mp);
     }
-    
     if ((mp.to == NODENUM_BROADCAST || mp.to == nodeDB->getNodeNum()) && (mp.from != 0)) {
         printPacket("Delivering rx packet", &mp);
         service.handleFromRadio(&mp);

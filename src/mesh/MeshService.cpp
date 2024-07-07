@@ -104,6 +104,16 @@ int MeshService::handleFromRadio(const meshtastic_MeshPacket *mp)
     return 0;
 }
 
+/// Handling of Echo packtets ( will need to be moved to a separate module.)
+int MeshService::handleEchoFromRadio(const meshtastic_MeshPacket *mp)
+{
+    powerFSM.trigger(EVENT_PACKET_FOR_PHONE); // Possibly keep the node from sleeping
+    //re-write packet from field to a fake sender !abcd647d
+    meshtastic_MeshPacket *p = packetPool.allocCopy(*mp);
+    setLed(true); // flash LED
+    delay(70);
+    setLed(false);
+}
 /// Do idle processing (mostly processing messages which have been queued from the radio)
 void MeshService::loop()
 {

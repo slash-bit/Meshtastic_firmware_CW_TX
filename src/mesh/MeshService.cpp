@@ -110,9 +110,18 @@ int MeshService::handleEchoFromRadio(const meshtastic_MeshPacket *mp)
     powerFSM.trigger(EVENT_PACKET_FOR_PHONE); // Possibly keep the node from sleeping
     //re-write packet from field to a fake sender !abcd647d
     meshtastic_MeshPacket *p = packetPool.allocCopy(*mp);
-    setLed(true); // flash LED
-    delay(70);
-    setLed(false);
+    // setLed(true); // flash LED
+    // delay(70);
+    // setLed(false);
+    #if defined(USE_EINK) && defined(PIN_EINK_EN) // i.e. T-Echo. Flash e-ink display lighting
+        digitalWrite(PIN_EINK_EN, digitalRead(PIN_EINK_EN) == LOW);
+        delay(70);
+        digitalWrite(PIN_EINK_EN, digitalRead(PIN_EINK_EN) == LOW);
+    #else
+        setLed(true); // flash LED instead
+        delay(70);
+        setLed(false);
+    #endif
 
     return 0;
 }

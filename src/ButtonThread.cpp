@@ -22,6 +22,7 @@
 #endif
 
 using namespace concurrency;
+boolean reqResponse = false;
 
 ButtonThread *buttonThread; // Declared extern in header
 volatile ButtonThread::ButtonEventType ButtonThread::btnEvent = ButtonThread::BUTTON_EVENT_NONE;
@@ -140,12 +141,18 @@ int32_t ButtonThread::runOnce()
         case BUTTON_EVENT_DOUBLE_PRESSED: {
             LOG_BUTTON("Double press!\n");
             service.refreshLocalMeshNode();
-            auto sentPosition = service.trySendPosition(NODENUM_BROADCAST, true);
+            auto sentPosition = service.trySendPosition(NODENUM_BROADCAST, reqResponse);
             if (screen) {
                 if (sentPosition)
-                    screen->print("Sent ad-hoc position\n");
+                    if (reqResponse)
+                        screen->print("Sent position ReqAck\n");
+                    else
+                        screen->print("Sent ad-hoc position\n");
                 else
-                    screen->print("Sent ad-hoc nodeinfo\n");
+                    if (reqResponse)
+                        screen->print("Sent nodeinfo ReqAck\n");
+                    else
+                        screen->print("Sent ad-hoc nodeinfo\n");
                 screen->forceDisplay(true); // Force a new UI frame, then force an EInk update
             }
             break;
@@ -154,22 +161,54 @@ int32_t ButtonThread::runOnce()
         case BUTTON_EVENT_MULTI_PRESSED: {
             LOG_BUTTON("Mulitipress! %hux\n", multipressClickCount);
             switch (multipressClickCount) {
-#if HAS_GPS
-            // 3 clicks: toggle GPS
-            case 3:
-                if (!config.device.disable_triple_click && (gps != nullptr)) {
-                    gps->toggleGpsMode();
-                    if (screen)
-                        screen->forceDisplay(true); // Force a new UI frame, then force an EInk update
+
+            case 3: 
+                LOG_BUTTON("Tripple press!\n");
+                service.refreshLocalMeshNode();
+                service.trySendNodeInfo(NODENUM_BROADCAST, reqResponse);
+                if (screen) {
+                    if (reqResponse) {
+                        screen->print("Sent position ReqAck\n");
+                    } else {
+                        screen->print("Sent ad-hoc position\n");
+                    screen->forceDisplay(true); // Force a new UI frame, then force an EInk update
                 }
                 break;
-#endif
-#if defined(USE_EINK) && defined(PIN_EINK_EN) // i.e. T-Echo
-            // 4 clicks: toggle backlight
+// #if HAS_GPS
+            // 3 clicks:  Send our NodeInfo ///toggle GPS
+                // if (!config.device.disable_triple_click && (gps != nullptr)) {
+                //     gps->toggleGpsMode();
+                //     if (screen)
+                //         screen->forceDisplay(true); // Force a new UI frame, then force an EInk update
+                // }
+                // break;
+// #endif
+
+            // 4 clicks: Toggle response required and toggle backlight
             case 4:
-                digitalWrite(PIN_EINK_EN, digitalRead(PIN_EINK_EN) == LOW);
+                if (reqResponse == false) {
+                    reqResponse = true;
+                    if (screen) {
+                        screen->print("Response required\n");
+                        screen->forceDisplay(true); // Force a new UI frame, then force an EInk update
+                    }
+                    #if defined(USE_EINK) && defined(PIN_EINK_EN) // i.e. T-Echo
+                        digitalWrite(PIN_EINK_EN, digitalRead(PIN_EINK_EN) == LOW);
+                    #endif
+                }
+                else if (reqResponse == true) {
+                    reqResponse = false;
+                    if (screen) {
+                        screen->print("Response not required\n");
+                        screen->forceDisplay(true); // Force a new UI frame, then force an EInk update
+                    }
+                    #if defined(USE_EINK) && defined(PIN_EINK_EN) // i.e. T-Echo
+                        digitalWrite(PIN_EINK_EN, digitalRead(PIN_EINK_EN) == LOW);
+                    #endif
+                }
+                // digitalWrite(PIN_EINK_EN, digitalRead(PIN_EINK_EN) == LOW);
                 break;
-#endif
+
             // No valid multipress action
             default:
                 break;
@@ -237,10 +276,10 @@ void ButtonThread::attachButtonInterrupts()
     attachInterrupt(
         config.device.button_gpio ? config.device.button_gpio : BUTTON_PIN,
         []() {
-            ButtonThread::userButton.tick();
-            runASAP = true;
             BaseType_t higherWake = 0;
             mainDelay.interruptFromISR(&higherWake);
+            ButtonThread::userButton.tick();
+            runASAP = true;
         },
         CHANGE);
 #endif

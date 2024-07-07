@@ -269,8 +269,11 @@ bool MeshService::trySendPosition(NodeNum dest, bool wantReplies)
     assert(node);
 
     if (hasValidPosition(node)) {
-#if HAS_GPS
-        if (positionModule) {
+#if HAS_GPS  // If we have a GPS, send our position and GPS enabled 
+        if (positionModule && gpsStatus->getHasLock()) {
+            setLed(true);
+            delay(150);
+            setLed(false);
             LOG_INFO("Sending position ping to 0x%x, wantReplies=%d, channel=%d\n", dest, wantReplies, node->channel);
             positionModule->sendOurPosition(dest, wantReplies, node->channel);
             return true;
@@ -278,12 +281,28 @@ bool MeshService::trySendPosition(NodeNum dest, bool wantReplies)
     } else {
 #endif
         if (nodeInfoModule) {
+            setLed(true);
+            delay(180);
+            setLed(false);
             LOG_INFO("Sending nodeinfo ping to 0x%x, wantReplies=%d, channel=%d\n", dest, wantReplies, node->channel);
             nodeInfoModule->sendOurNodeInfo(dest, wantReplies, node->channel);
         }
     }
     return false;
 }
+bool MeshService::trySendNodeInfo(NodeNum dest, bool wantReplies){
+    meshtastic_NodeInfoLite *node = nodeDB->getMeshNode(nodeDB->getNodeNum());
+
+    assert(node);
+    if (nodeInfoModule) {
+    setLed(true);
+    delay(180);
+    setLed(false);
+    LOG_INFO("Sending nodeinfo ping to 0x%x, wantReplies=%d, channel=%d\n", dest, wantReplies, node->channel);
+    nodeInfoModule->sendOurNodeInfo(dest, wantReplies, node->channel);
+    }
+    return false;
+} 
 
 void MeshService::sendToPhone(meshtastic_MeshPacket *p)
 {

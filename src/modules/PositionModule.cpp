@@ -53,7 +53,29 @@ bool PositionModule::handleReceivedProtobuf(const meshtastic_MeshPacket &mp, mes
     bool isLocal = false;
     if (nodeDB->getNodeNum() == getFrom(&mp)) {
         isLocal = true;
-        if (config.position.fixed_position) {
+        //region for echo module. perhaps move it later
+        //update displ to show echo packet
+        bool wasBroadcast = mp.to == NODENUM_BROADCAST;
+        //if packet is a broadcast packet and it is from me
+        if (wasBroadcast && mp.from == nodeDB->getNodeNum() && config.device.led_heartbeat_disabled) { //
+            LOG_DEBUG("++++Received own position broadcast ++++ \n");
+            //update display section
+            char time[20]; //convert cons uint32_t to const time_t
+            time_t rx_time = mp.rx_time;
+            struct tm *tm = localtime(&rx_time); //convert time_t like 1713774969 to human readable time like 03:42:49
+            strftime(time, 20, "%H:%M:%S", tm);
+            String lcd = String("Echo: ") + mp.rx_rssi + " dB at " + time + "\n";
+            printPacket(lcd.c_str(), &mp);
+            if (screen) //update display
+                screen->print(lcd.c_str());
+                screen->forceDisplay(true); // Force a new UI frame, then force an EInk update
+            } // end of display section            
+        //endregion
+        // esle if the position packet from myslef to myslef
+        if (mp.to == nodeDB->getNodeNum() && mp.from == nodeDB->getNodeNum()) {
+            LOG_DEBUG("Received position from MYSELF to MYSELF\n");
+        }
+        if (config.position.fixed_position && !config.device.led_heartbeat_disabled) {
             LOG_DEBUG("Ignore incoming position update from myself except for time, because position.fixed_position is true\n");
 
 #ifdef T_WATCH_S3
@@ -264,12 +286,16 @@ meshtastic_MeshPacket *PositionModule::allocAtakPli()
 
 void PositionModule::sendOurPosition()
 {
-    bool requestReplies = currentGeneration != radioGeneration;
-    currentGeneration = radioGeneration;
+    bool requestReplies = true;
+    // bool requestReplies = currentGeneration != radioGeneration;
+    // currentGeneration = radioGeneration;
 
     // If we changed channels, ask everyone else for their latest info
     LOG_INFO("Sending pos@%x:6 to mesh (wantReplies=%d)\n", localPosition.timestamp, requestReplies);
     sendOurPosition(NODENUM_BROADCAST, requestReplies);
+    setLed(true);
+    delay(70);
+    setLed(false);
 }
 
 void PositionModule::sendOurPosition(NodeNum dest, bool wantReplies, uint8_t channel)

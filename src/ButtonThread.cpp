@@ -193,8 +193,8 @@ int32_t ButtonThread::runOnce()
                         screen->print("Response required\n");
                         screen->forceDisplay(true); // Force a new UI frame, then force an EInk update
                     }
-                    #if defined(USE_EINK) && defined(PIN_EINK_EN) // i.e. T-Echo
-                        digitalWrite(PIN_EINK_EN, digitalRead(PIN_EINK_EN) == LOW);
+                    #if defined(LED_GREEN) && defined(PIN_EINK_EN) // i.e. T-Echo, toggl green led
+                        digitalWrite(LED_GREEN, digitalRead(LED_GREEN) == LOW);
                     #endif
                 }
                 else if (reqResponse == true) {
@@ -203,8 +203,8 @@ int32_t ButtonThread::runOnce()
                         screen->print("Response not required\n");
                         screen->forceDisplay(true); // Force a new UI frame, then force an EInk update
                     }
-                    #if defined(USE_EINK) && defined(PIN_EINK_EN) // i.e. T-Echo
-                        digitalWrite(PIN_EINK_EN, digitalRead(PIN_EINK_EN) == LOW);
+                    #if defined(LED_GREEN) && defined(PIN_EINK_EN) // i.e. T-Echo, toggl green led
+                        digitalWrite(LED_GREEN, digitalRead(LED_GREEN) == LOW);
                     #endif
                 }
                 // digitalWrite(PIN_EINK_EN, digitalRead(PIN_EINK_EN) == LOW);

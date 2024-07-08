@@ -1,5 +1,6 @@
 #include "TraceRouteModule.h"
 #include "MeshService.h"
+#include "main.h"
 
 TraceRouteModule *traceRouteModule;
 
@@ -91,6 +92,14 @@ meshtastic_MeshPacket *TraceRouteModule::allocReply()
     // Create a MeshPacket with this payload and set it as the reply
     meshtastic_MeshPacket *reply = allocDataProtobuf(*updated);
 
+    //flash red LED and print on screen "Traceroute reply sent"
+    if (screen)
+        screen->print("Traceroute reply sent\n");
+    #if defined(LED_RED) && defined(PIN_EINK_EN) // i.e. T-Echo, toggl green led
+        digitalWrite(LED_RED, digitalRead(LED_RED) == LOW);
+        delay(100);
+        digitalWrite(LED_RED, digitalRead(LED_RED) == LOW);
+    #endif
     return reply;
 }
 

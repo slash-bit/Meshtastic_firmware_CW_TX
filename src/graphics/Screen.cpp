@@ -1649,8 +1649,8 @@ void Screen::setup()
     // Require presses to switch between frames.
     ui->disableAutoTransition();
 
-    // Set up a log buffer with 3 lines, 32 chars each.
-    dispdev->setLogBuffer(3, 32);
+    // Set up a log buffer with 5 lines, 32 chars each.
+    dispdev->setLogBuffer(5, 32);
 
 #ifdef SCREEN_MIRROR
     dispdev->mirrorScreen();
